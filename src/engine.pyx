@@ -131,11 +131,10 @@ cdef class Tensor:
             raise RuntimeError(f"self and other are on diferent devices found {self.device} and {other.device}")
 
         cdef double* result = cpu_backend.new_array(self.size)
-        cpu_backend.sum_arrays(self.data, other.data, result, self.size)
         # This results in an extra memory allocation
         out = Tensor(self.shape, device=self.device, prev=(self, other), op="+")
-        cpu_backend.free_array(out.data)
         out.data = result
+        cpu_backend.sum_arrays(self.data, other.data, out.data, self.size)
 
         def _backward():
             # self.grad += out.grad
@@ -195,7 +194,31 @@ cdef class Tensor:
 
         return out
 
+    def tanh(self) -> Tensor:
+        cdef double* result = cpu_backend.new_array(self.size)
+        cpu_backend.tanh_array(self.data, result, self.size)
+        out = Tensor(self.shape, device=self.device, prev=(self,), op="tanh")
+        cpu_backend.free_array(out.data)
+        out.data = result
+
+        def _backward():
+            # self.grad += out.grad * (1 - out.data * out.data)
+            cpu_backend.tanh_backward(out.grad, out.data, self.grad, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
 def fill(arr: Tensor, double value):
     """In place filling of an array"""
     cpu_backend.set_array(arr.data, value, arr.size)
 
+def from_numpy(np.ndarray arr, str device="cpu", str label="") -> Tensor:
+    if arr.dtype != np.float64:
+        raise ValueError("Only float64 is supported")
+
+    cdef double* data = <double*>arr.data
+    shape = tuple(arr.shape[i] for i in range(arr.ndim))
+    cdef Tensor out = Tensor(shape, device=device, label=label)
+    cpu_backend.copy_array(out.data, data, out.size)
+    return out

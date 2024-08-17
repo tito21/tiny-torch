@@ -16,3 +16,6 @@ cdef extern from "cpu_backend.c":
 
     void div_arrays(double* a, double* b, double* c, size_t size)
     void div_accu_arrays(double* a, double* b, double* c, size_t size)
+
+    void tanh_array(double* a, double* c, size_t size)
+    void tanh_backward(double* grad, double* out, double* c, size_t size)
