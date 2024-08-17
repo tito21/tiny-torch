@@ -68,6 +68,40 @@ class TestGrad(unittest.TestCase):
 
         self.assertTrue(np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
 
+    def test_neg(self):
+        a_numpy = np.random.rand(*SHAPE)
+
+        a = from_numpy(a_numpy)
+        out = -a
+        out.backward()
+
+        a_torch = torch.from_numpy(a_numpy)
+        a_torch.requires_grad = True
+
+        out_torch = -a_torch
+        out_torch.backward(gradient=torch.ones_like(out_torch))
+
+        self.assertTrue(np.allclose(a.grad_numpy(), a_torch.grad.numpy()))
+
+    def test_matmul(self):
+        a_numpy = np.random.rand(*SHAPE)
+        b_numpy = np.random.rand(*reversed(SHAPE))
+
+        a = from_numpy(a_numpy)
+        b = from_numpy(b_numpy)
+        out = a @ b
+        out.backward()
+
+        a_torch = torch.from_numpy(a_numpy)
+        a_torch.requires_grad = True
+        b_torch = torch.from_numpy(b_numpy)
+        b_torch.requires_grad = True
+
+        out_torch = a_torch @ b_torch
+        out_torch.backward(gradient=torch.ones_like(out_torch))
+
+        self.assertTrue(np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+
     def test_tanh(self):
         a_numpy = np.random.rand(*SHAPE)
         b_numpy = np.random.rand(*reversed(SHAPE))
@@ -79,7 +113,7 @@ class TestGrad(unittest.TestCase):
 
         a_torch = torch.from_numpy(a_numpy)
         a_torch.requires_grad = True
-        b_torch = torch.from_numpy(b.data)
+        b_torch = torch.from_numpy(b_numpy)
         b_torch.requires_grad = True
 
         out_torch = (a_torch @ b_torch).tanh()
@@ -87,6 +121,24 @@ class TestGrad(unittest.TestCase):
 
         self.assertTrue(np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
 
+    def test_sigmoid(self):
+        a_numpy = np.random.rand(*SHAPE)
+        b_numpy = np.random.rand(*reversed(SHAPE))
+
+        a = from_numpy(a_numpy)
+        b = from_numpy(b_numpy)
+        out = (a @ b).sigmoid()
+        out.backward()
+
+        a_torch = torch.from_numpy(a_numpy)
+        a_torch.requires_grad = True
+        b_torch = torch.from_numpy(b_numpy)
+        b_torch.requires_grad = True
+
+        out_torch = (a_torch @ b_torch).sigmoid()
+        out_torch.backward(gradient=torch.ones_like(out_torch))
+
+        self.assertTrue(np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
 
 if __name__ == '__main__':
     unittest.main()

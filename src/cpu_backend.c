@@ -37,6 +37,13 @@ void sum_accu_arrays(double* a, double* b, double* c, size_t size)
     }
 }
 
+void sum_accu_scalar(double* a, double b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += a[i] + b;
+    }
+}
+
 void sub_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
@@ -65,6 +72,13 @@ void mul_accu_arrays(double* a, double* b, double* c, size_t size)
     }
 }
 
+void mul_accu_scalar(double* a, double b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += a[i] * b;
+    }
+}
+
 void div_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
@@ -76,6 +90,88 @@ void div_accu_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] / b[i];
+    }
+}
+
+int matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k, int transpose_a, int transpose_b)
+{
+    // a: m x n
+    // b: l x k
+    if (!transpose_a && !transpose_b) {
+        // n = l
+        // (m x n) @ (l x k) = m x k
+        // c_{xy} = sum_{i} a_{xi} * b_{iy}
+        if (n != l) {
+            return -1;
+        }
+        for (size_t x = 0; x < m; x++) {
+            for (size_t y = 0; y < k; y++) {
+                c[x * k + y] = 0;
+                for (size_t i = 0; i < n; i++) {
+                    c[x * k + y] += a[x * n + i] * b[i * k + y];
+                }
+            }
+        }
+    } else if (transpose_a && !transpose_b) {
+        // m = l
+        // (m x n).T @ (l x k) = n x k
+        // c_{xy} = sum_{i} a_{ix} * b_{iy}
+        if (m != l) {
+            return -1;
+        }
+        for (size_t x = 0; x < n; x++) {
+            for (size_t y = 0; y < k; y++) {
+                c[x * k + y] = 0;
+                for (size_t i = 0; i < m; i++) {
+                    c[x * k + y] += a[i * n + x] * b[i * k + y];
+                }
+            }
+        }
+    } else if (!transpose_a && transpose_b) {
+        // n = k
+        // (m x n) @ (l x k).T = m x l
+        // c_{xy} = sum_{i} a_{xi} * b_{yi}
+        if (n != k) {
+            return -1;
+        }
+        for (size_t x = 0; x < m; x++) {
+            for (size_t y = 0; y < l; y++) {
+                c[x * l + y] = 0;
+                for (size_t i = 0; i < n; i++) {
+                    c[x * l + y] += a[x * n + i] * b[y * k + i];
+                }
+            }
+        }
+    } else {
+        // m = k
+        // (m x n).T @ (l x k).T = n x l
+        // c_{xy} = sum_{i} a_{ix} * b_{yi}
+        if (m != k) {
+            return -1;
+        }
+        for (size_t x = 0; x < n; x++) {
+            for (size_t y = 0; y < l; y++) {
+                c[x * l + y] = 0;
+                for (size_t i = 0; i < m; i++) {
+                    c[x * l + y] += a[i * n + x] * b[y * k + i];
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+void sigmoid_array(double* a, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = 1 / (1 + exp(-a[i]));
+    }
+}
+
+void sigmoid_backward(double* grad, double* out, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += grad[i] * out[i] * (1 - out[i]);
     }
 }
 

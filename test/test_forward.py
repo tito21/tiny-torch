@@ -53,15 +53,50 @@ class TestOp(unittest.TestCase):
         out_torch = a * b
         self.assertTrue(np.allclose(out.numpy(), out_torch.numpy()))
 
-    def test_tanh(self):
+    def test_neg(self):
         a_numpy = np.random.rand(*SHAPE)
 
+        a = from_numpy(a_numpy)
+        out = -a
+
+        a = torch.from_numpy(a_numpy)
+
+        out_torch = -a
+        self.assertTrue(np.allclose(out.numpy(), out_torch.numpy()))
+
+    def test_matmul(self):
+        a_numpy = np.random.rand(*SHAPE)
+        b_numpy = np.random.rand(*reversed(SHAPE))
+
+        a = from_numpy(a_numpy)
+        b = from_numpy(b_numpy)
+        out = a @ b
+
+        a = torch.from_numpy(a_numpy)
+        b = torch.from_numpy(b_numpy)
+
+        out_torch = a @ b
+        self.assertTrue(np.allclose(out.numpy(), out_torch.numpy()))
+
+    def test_tanh(self):
+        a_numpy = np.random.rand(*SHAPE)
 
         a = from_numpy(a_numpy)
         out = a.tanh()
 
         a = torch.from_numpy(a_numpy)
         out_torch = a.tanh()
+
+        self.assertTrue(np.allclose(out.numpy(), out_torch.numpy()))
+
+    def test_sigmoid(self):
+        a_numpy = np.random.rand(*SHAPE)
+
+        a = from_numpy(a_numpy)
+        out = a.sigmoid()
+
+        a = torch.from_numpy(a_numpy)
+        out_torch = a.sigmoid()
 
         self.assertTrue(np.allclose(out.numpy(), out_torch.numpy()))
 

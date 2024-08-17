@@ -11,6 +11,21 @@ cdef extern from "numpy/arrayobject.h":
 
 cimport cpu_backend
 
+cdef to_numpy(double* data, tuple shape):
+    cdef Py_ssize_t ndim = len(shape)
+    cdef np.npy_intp* dims = <np.npy_intp*>malloc(ndim * sizeof(np.npy_intp))
+    if not dims:
+        raise MemoryError("Unable to allocate memory for dimensions")
+    cdef int i
+    cdef object element
+    for i in range(ndim):
+        dims[i] = <np.npy_intp>shape[i]
+    cdef int typenum = np.NPY_FLOAT64
+    cdef PyArrayObject* np_array = PyArray_SimpleNewFromData(ndim, dims, typenum, <void*>data)
+    result = PyArray_Return(np_array)
+    free(dims)
+    return result
+
 cdef class Tensor:
 
     cdef double* data
@@ -75,7 +90,7 @@ cdef class Tensor:
 
     cpdef zero_grad(self):
         if self.device == "cpu":
-            cpu_backend.set_array(self.data, 0.0,  self.size)
+            cpu_backend.set_array(self.grad, 0.0,  self.size)
         elif self.device == "cuda":
             raise NotImplementedError("cuda is not implemented yet")
 
@@ -92,39 +107,13 @@ cdef class Tensor:
         if self.device == "cuda":
             # first copy to cpu
             self.cpu()
-
-        cdef Py_ssize_t ndim = len(self.shape)
-        cdef np.npy_intp* dims = <np.npy_intp*>malloc(ndim * sizeof(np.npy_intp))
-        if not dims:
-            raise MemoryError("Unable to allocate memory for dimensions")
-        cdef int i
-        cdef object element
-        for i in range(ndim):
-            dims[i] = <np.npy_intp>self.shape[i]
-        cdef int typenum = np.NPY_FLOAT64
-        cdef PyArrayObject* np_array = PyArray_SimpleNewFromData(ndim, dims, typenum, <void*>self.data)
-        result = PyArray_Return(np_array)
-        free(dims)
-        return result
+        return to_numpy(self.data, self.shape)
 
     def grad_numpy(self):
         if self.device == "cuda":
             # first copy to cpu
             self.cpu()
-
-        cdef Py_ssize_t ndim = len(self.shape)
-        cdef np.npy_intp* dims = <np.npy_intp*>malloc(ndim * sizeof(np.npy_intp))
-        if not dims:
-            raise MemoryError("Unable to allocate memory for dimensions")
-        cdef int i
-        cdef object element
-        for i in range(ndim):
-            dims[i] = <np.npy_intp>self.shape[i]
-        cdef int typenum = np.NPY_FLOAT64
-        cdef PyArrayObject* np_array = PyArray_SimpleNewFromData(ndim, dims, typenum, <void*>self.grad)
-        result = PyArray_Return(np_array)
-        free(dims)
-        return result
+        return to_numpy(self.grad, self.shape)
 
     def __add__(self, other: Tensor) -> Tensor:
         if self.device != other.device:
@@ -138,9 +127,9 @@ cdef class Tensor:
 
         def _backward():
             # self.grad += out.grad
-            cpu_backend.sum_accu_arrays(self.grad, out.grad, self.grad, self.size)
+            cpu_backend.sum_arrays(self.grad, out.grad, self.grad, self.size)
             # other.grad += out.grad
-            cpu_backend.sum_accu_arrays(other.grad, out.grad, other.grad, self.size)
+            cpu_backend.sum_arrays(other.grad, out.grad, other.grad, self.size)
 
         out._backward_func = _backward
 
@@ -194,6 +183,59 @@ cdef class Tensor:
 
         return out
 
+    def __rsub__(self, other: Tensor) -> Tensor:
+        return other - self
+
+    def __neg__(self) -> Tensor:
+        cdef double* result = cpu_backend.new_array(self.size)
+        cpu_backend.set_array(result, -1.0, self.size)
+        cpu_backend.mul_arrays(self.data, result, result, self.size)
+        # This results in an extra memory allocation
+        out = Tensor(self.shape, device=self.device, prev=(self,), op="-1")
+        cpu_backend.free_array(out.data)
+        out.data = result
+
+        def _backward():
+            # self.grad += out.grad * -1.0
+            cpu_backend.mul_accu_scalar(out.grad, -1.0, self.grad, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
+    def __matmul__(self, other: Tensor) -> Tensor:
+        if self.device != other.device:
+            raise RuntimeError(f"self and other are on diferent devices found {self.device} and {other.device}")
+
+        assert self.shape[1] == other.shape[0], "Incompatible shapes for matmul"
+
+        out_shape = (self.shape[0], other.shape[1])
+        cdef double* result = cpu_backend.new_array(out_shape[0] * out_shape[1])
+        cpu_backend.set_array(result, 0.0, out_shape[0] * out_shape[1])
+        cpu_backend.matmul(self.data, other.data, result, self.shape[0], self.shape[1], other.shape[0], other.shape[1], False, False)
+        # This results in an extra memory allocation
+        out = Tensor(out_shape, device=self.device, prev=(self, other), op="@")
+        cpu_backend.free_array(out.data)
+        out.data = result
+
+        def _backward():
+            # self.grad += out.grad @ other.data.T
+            # (m x n) @ (l x k).T = m x l
+            result = cpu_backend.new_array(self.shape[0] * other.shape[0])
+            cpu_backend.matmul(out.grad, other.data, result, out_shape[0], out_shape[1], other.shape[0], other.shape[1], transpose_a=False, transpose_b=True)
+            cpu_backend.sum_arrays(self.grad, result, self.grad, self.size)
+            cpu_backend.free_array(result)
+            # other.grad += self.data.T @ out.grad
+            # (m x n).T @ (l x k) = n x k
+            result = cpu_backend.new_array(other.shape[0] * other.shape[1])
+            cpu_backend.matmul(self.data, out.grad, result, self.shape[0], self.shape[1], out_shape[0], out_shape[1], transpose_a=True, transpose_b=False)
+            cpu_backend.sum_arrays(other.grad, result, other.grad, other.size)
+            cpu_backend.free_array(result)
+
+        out._backward_func = _backward
+
+        return out
+
     def tanh(self) -> Tensor:
         cdef double* result = cpu_backend.new_array(self.size)
         cpu_backend.tanh_array(self.data, result, self.size)
@@ -204,6 +246,21 @@ cdef class Tensor:
         def _backward():
             # self.grad += out.grad * (1 - out.data * out.data)
             cpu_backend.tanh_backward(out.grad, out.data, self.grad, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
+    def sigmoid(self):
+        cdef double* result = cpu_backend.new_array(self.size)
+        cpu_backend.sigmoid_array(self.data, result, self.size)
+        out = Tensor(self.shape, device=self.device, prev=(self,), op="sigmoid")
+        cpu_backend.free_array(out.data)
+        out.data = result
+
+        def _backward():
+            # self.grad += out.grad * out.data * (1 - out.data)
+            cpu_backend.sigmoid_backward(out.grad, out.data, self.grad, self.size)
 
         out._backward_func = _backward
 
