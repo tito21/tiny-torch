@@ -24,3 +24,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# C extensions
+src/engine.c

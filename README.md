@@ -17,4 +17,4 @@ Just run `python setup.py install`
 
 # Run test aginst pytorch
 
-`python test/test_forward.py`
+`python test/test.py`
