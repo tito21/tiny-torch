@@ -93,6 +93,24 @@ cdef class Tensor:
     def cuda(self):
         raise NotImplementedError("cuda is not implemented yet")
 
+    def numpy(self):
+        if self.device == "cuda":
+            # first copy to cpu
+            self.cpu()
+
+        cdef Py_ssize_t ndim = len(self.shape)
+        cdef np.npy_intp* dims = <np.npy_intp*>malloc(ndim * sizeof(np.npy_intp))
+        if not dims:
+            raise MemoryError("Unable to allocate memory for dimensions")
+        cdef int i
+        cdef object element
+        for i in range(ndim):
+            dims[i] = <np.npy_intp>self.shape[i]
+        cdef int typenum = np.NPY_FLOAT64
+        cdef PyArrayObject* np_array = PyArray_SimpleNewFromData(ndim, dims, typenum, <void*>self.data)
+        result = PyArray_Return(np_array)
+        free(dims)
+        return result
 
     def __add__(self, other: Tensor) -> Tensor:
         if self.device != other.device:
