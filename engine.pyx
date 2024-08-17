@@ -171,6 +171,30 @@ cdef class Tensor:
 
         return out
 
+    def __rmul__(self, other: Tensor) -> Tensor:
+        return self * other
+
+    def __sub__(self, other: Tensor) -> Tensor:
+        if self.device != other.device:
+            raise RuntimeError(f"self and other are on diferent devices found {self.device} and {other.device}")
+
+        cdef double* result = cpu_backend.new_array(self.size)
+        cpu_backend.sub_arrays(self.data, other.data, result, self.size)
+        # This results in an extra memory allocation
+        out = Tensor(self.shape, device=self.device, prev=(self, other), op="-")
+        cpu_backend.free_array(out.data)
+        out.data = result
+
+        def _backward():
+            # self.grad += out.grad
+            cpu_backend.sum_accu_arrays(self.grad, out.grad, self.grad, self.size)
+            # other.grad -= out.grad
+            cpu_backend.sub_accu_arrays(other.grad, out.grad, other.grad, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
 def fill(arr: Tensor, double value):
     """In place filling of an array"""
     cpu_backend.set_array(arr.data, value, arr.size)

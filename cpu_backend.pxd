@@ -8,6 +8,9 @@ cdef extern from "cpu_backend.c":
     void sum_arrays(double* a, double* b, double* c, size_t size)
     void sum_accu_arrays(double* a, double* b, double* c, size_t size)
 
+    void sub_arrays(double* a, double* b, double* c, size_t size)
+    void sub_accu_arrays(double* a, double* b, double* c, size_t size)
+
     void mul_arrays(double* a, double* b, double* c, size_t size)
     void mul_accu_arrays(double* a, double* b, double* c, size_t size)
 

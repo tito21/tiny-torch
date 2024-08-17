@@ -11,7 +11,7 @@ print(b.numpy())
 print(a.grad_numpy())
 print(b.grad_numpy())
 
-c = a * b
+c = a - b
 c.label = "c"
 print(c.numpy())
 
