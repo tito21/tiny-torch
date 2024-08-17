@@ -1,19 +1,23 @@
-from tinytorch import Tensor, fill, print_tensor, print_grad
+from tinytorch import Tensor, fill
 
-a = Tensor((10, 1), label="a")
-print_tensor(a)
+a = Tensor((1, 10), label="a")
 fill(a, 2.0)
-print_tensor(a)
-b = Tensor((10, 1), label="b")
-fill(b, 2.0)
-print_tensor(b)
+b = Tensor((1, 10), label="b")
+fill(b, 3.0)
 
-c = a + b
+print(a.numpy())
+print(b.numpy())
+
+print(a.grad_numpy())
+print(b.grad_numpy())
+
+c = a * b
 c.label = "c"
-print(c)
-print_tensor(c)
+print(c.numpy())
 
+print(a.grad_numpy())
+print(b.grad_numpy())
 c.backward()
 
-print_grad(a)
-print_grad(b)
+print(a.grad_numpy())
+print(b.grad_numpy())

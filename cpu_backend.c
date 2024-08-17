@@ -29,3 +29,52 @@ void sum_arrays(double* a, double* b, double* c, size_t size)
         c[i] = a[i] + b[i];
     }
 }
+
+void sum_accu_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += a[i] + b[i];
+    }
+}
+
+void sub_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = a[i] - b[i];
+    }
+}
+
+void sub_accu_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += a[i] - b[i];
+    }
+}
+
+void mul_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = a[i] * b[i];
+    }
+}
+
+void mul_accu_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += (a[i] * b[i]);
+    }
+}
+
+void div_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = a[i] / b[i];
+    }
+}
+
+void div_accu_arrays(double* a, double* b, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += (a[i] / b[i]);
+    }
+}

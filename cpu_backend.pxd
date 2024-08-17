@@ -4,4 +4,12 @@ cdef extern from "cpu_backend.c":
     void free_array(double* arr)
     void set_array(double* arr, double value, size_t size)
     void copy_array(double* dest, double* src, size_t size)
+
     void sum_arrays(double* a, double* b, double* c, size_t size)
+    void sum_accu_arrays(double* a, double* b, double* c, size_t size)
+
+    void mul_arrays(double* a, double* b, double* c, size_t size)
+    void mul_accu_arrays(double* a, double* b, double* c, size_t size)
+
+    void div_arrays(double* a, double* b, double* c, size_t size)
+    void div_accu_arrays(double* a, double* b, double* c, size_t size)
