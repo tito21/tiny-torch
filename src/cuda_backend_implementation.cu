@@ -37,7 +37,7 @@ void cuda_sum_accu_arrays(double* a, double* b, double* c, size_t size)
     cudaCheck(cudaGetLastError());
 }
 
-void cuda_sum_accu_scalar(double* a, double b, double* c, size_t size)
+void cuda_sum_accu_scalar(double* a, double* b, double* c, size_t size)
 {
     sum_accu_scalar_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, b, c, size);
     cudaCheck(cudaGetLastError());
@@ -142,32 +142,64 @@ int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, s
     return 0;
 }
 
+void cuda_power_arrays(double* a, double* c, double power, size_t size)
+{
+    power_array_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, c, power, size);
+    cudaCheck(cudaGetLastError());
+}
+
+void cuda_power_backward(double* grad, double* out, double* c, double power, size_t size)
+{
+    power_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, power, size);
+    cudaCheck(cudaGetLastError());
+}
+
 void cuda_sigmoid_array(double* a, double* c, size_t size)
 {
     sigmoid_array_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(c, a, size);
+    cudaCheck(cudaGetLastError());
 }
 
 void cuda_sigmoid_backward(double* grad, double* out, double* c, size_t size)
 {
     sigmoid_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, size);
+    cudaCheck(cudaGetLastError());
 }
 
 void cuda_tanh_array(double* a, double* c, size_t size)
 {
     tanh_array_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, c, size);
+    cudaCheck(cudaGetLastError());
 }
 
 void cuda_tanh_backward(double* grad, double* out, double* c, size_t size)
 {
     tanh_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, size);
+    cudaCheck(cudaGetLastError());
 }
 
 void cuda_relu_array(double* a, double* c, size_t size)
 {
     relu_array_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, c, size);
+    cudaCheck(cudaGetLastError());
 }
 
 void cuda_relu_backward(double* grad, double* out, double* c, size_t size)
 {
     relu_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, size);
+    cudaCheck(cudaGetLastError());
+}
+
+void cuda_sum_reduce(double* a, double* c, size_t size)
+{
+    // Grid Size (cut in half) (No padding)
+    int GRID_SIZE = size / BLOCK_SIZE / 2;
+    GRID_SIZE = GRID_SIZE == 0 ? 1 : GRID_SIZE;
+    double* r = cuda_new_array(size);
+    sum_reduction<<<GRID_SIZE, BLOCK_SIZE>>>(a, r);
+    cudaCheck(cudaGetLastError());
+    sum_reduction<<<1, BLOCK_SIZE>>>(r, r);
+    cudaCheck(cudaGetLastError());
+    cudaCheck(cudaMemcpy(c, r, sizeof(double), cudaMemcpyDeviceToDevice));
+    cuda_free_array(r);
 }

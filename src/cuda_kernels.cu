@@ -12,7 +12,7 @@
 
 __global__ void sum_reduction(double* v, double* v_r) {
     // Allocate shared memory
-    __shared__ float partial_sum[SHMEM_SIZE];
+    __shared__ double partial_sum[SHMEM_SIZE];
 
     // Calculate thread ID
     // int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -65,11 +65,11 @@ __global__ void sum_accu_arrays_kernel(double* a, double* b, double* c, size_t s
     }
 }
 
-__global__ void sum_accu_scalar_kernel(double* a, double b, double* c, size_t size)
+__global__ void sum_accu_scalar_kernel(double* a, double* b, double* c, size_t size)
 {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     if (i < size) {
-        c[i] += a[i] + b;
+        c[i] += a[i] + b[0];
     }
 }
 
@@ -191,6 +191,22 @@ __global__ void matmul_transpose_ab_kernel(double* a, double* b, double* c, size
         for (size_t i = 0; i < m; i++) {
             c[x * l + y] += a[i * n + x] * b[y * k + i];
         }
+    }
+}
+
+__global__ void power_array_kernel(double* a, double* c, double power, size_t size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i < size) {
+        c[i] = pow(a[i], power);
+    }
+}
+
+__global__ void power_backward_kernel(double* grad, double* out, double* c, double power, size_t size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i < size) {
+        c[i] += grad[i] * power * pow(out[i], power - 1);
     }
 }
 

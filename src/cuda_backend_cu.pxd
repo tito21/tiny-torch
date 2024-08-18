@@ -7,7 +7,7 @@ cdef extern from "cuda_backend_implementation.cuh":
 
     void cuda_sum_arrays(double* a, double* b, double* c, size_t size)
     void cuda_sum_accu_arrays(double* a, double* b, double* c, size_t size)
-    void cuda_sum_accu_scalar(double* a, double b, double* c, size_t size)
+    void cuda_sum_accu_scalar(double* a, double* b, double* c, size_t size)
 
     void cuda_sub_arrays(double* a, double* b, double* c, size_t size)
     void cuda_sub_accu_arrays(double* a, double* b, double* c, size_t size)
@@ -21,6 +21,9 @@ cdef extern from "cuda_backend_implementation.cuh":
 
     int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k, int transpose_a, int transpose_b)
 
+    void cuda_power_arrays(double* a, double* c, double power, size_t size)
+    void cuda_power_backward(double* grad, double* out, double* c, double power, size_t size)
+
     void cuda_tanh_array(double* a, double* c, size_t size)
     void cuda_tanh_backward(double* grad, double* out, double* c, size_t size)
 
@@ -29,3 +32,5 @@ cdef extern from "cuda_backend_implementation.cuh":
 
     void cuda_relu_array(double* a, double* c, size_t size)
     void cuda_relu_backward(double* grad, double* out, double* c, size_t size)
+
+    void cuda_sum_reduce(double* a, double* c, size_t size);

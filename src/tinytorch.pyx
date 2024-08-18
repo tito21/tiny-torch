@@ -4,28 +4,11 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-cdef extern from "numpy/arrayobject.h":
-    ctypedef void PyArrayObject
-    PyArrayObject* PyArray_SimpleNewFromData(int nd, np.npy_intp* dims, int typenum, void* data)
-    object PyArray_Return(PyArrayObject* arr)
-
 cimport memutils
 from cpu_backend_c cimport *
 from cuda_backend_cu cimport *
 
 cdef np.ndarray to_numpy(double* data, tuple shape):
-    # cdef Py_ssize_t ndim = len(shape)
-    # cdef np.npy_intp* dims = <np.npy_intp*>malloc(ndim * sizeof(np.npy_intp))
-    # if not dims:
-    #     raise MemoryError("Unable to allocate memory for dimensions")
-    # cdef int i
-    # cdef object element
-    # for i in range(ndim):
-    #     dims[i] = <np.npy_intp>shape[i]
-    # cdef int typenum = np.NPY_FLOAT64
-    # cdef PyArrayObject* np_array = PyArray_SimpleNewFromData(ndim, dims, typenum, <void*>data)
-    # result = PyArray_Return(np_array)
-    # free(dims)
     return np.array([data[i] for i in range(np.prod(shape))], dtype=np.float64).reshape(shape)
 
 cdef class Tensor:
@@ -102,24 +85,38 @@ cdef class Tensor:
             cuda_set_array(self.grad, 0.0,  self.size)
 
     def cpu(self):
+        cdef double* cpu_data
+        cdef double* cpu_grad
         if self.device == "cpu":
             return self
         else:
-            out = Tensor(self.shape, device="cpu", label=self.label, prev=self._prev, op=self.op)
-            out._backward_func = self._backward_func
-            memutils.memutils_to_host(out.data, self.data, sizeof(double) * self.size)
-            memutils.memutils_to_host(out.grad, self.grad, sizeof(double) * self.size)
-            return out
+            cpu_data = cpu_new_array(self.size)
+            cpu_grad = cpu_new_array(self.size)
+            memutils.memutils_to_host(cpu_data, self.data, sizeof(double) * self.size)
+            memutils.memutils_to_host(cpu_grad, self.grad, sizeof(double) * self.size)
+            cuda_free_array(self.data)
+            cuda_free_array(self.grad)
+            self.device = "cpu"
+            self.data = cpu_data
+            self.grad = cpu_grad
+            return self
 
     def cuda(self):
+        cdef double* cuda_data
+        cdef double* cuda_grad
         if self.device == "cuda":
             return self
         else:
-            out = Tensor(self.shape, device="cuda", label=self.label, prev=self._prev, op=self.op)
-            out._backward_func = self._backward_func
-            memutils.memutils_to_device(out.data, self.data, sizeof(double) * self.size)
-            memutils.memutils_to_device(out.grad, self.grad, sizeof(double) * self.size)
-            return out
+            cuda_data = cuda_new_array(self.size)
+            cuda_grad = cuda_new_array(self.size)
+            memutils.memutils_to_device(cuda_data, self.data, sizeof(double) * self.size)
+            memutils.memutils_to_device(cuda_grad, self.grad, sizeof(double) * self.size)
+            cpu_free_array(self.data)
+            cpu_free_array(self.grad)
+            self.device = "cuda"
+            self.data = cuda_data
+            self.grad = cuda_grad
+            return self
 
     def numpy(self):
         if self.device == "cuda":
@@ -282,6 +279,43 @@ cdef class Tensor:
 
         return out
 
+    def __pow__(self, double power) -> Tensor:
+        out = Tensor(self.shape, device=self.device, prev=(self,), op="**")
+        if self.device == "cpu":
+            cpu_power_arrays(self.data, out.data, power, self.size)
+        else:
+            cuda_power_arrays(self.data, out.data, power, self.size)
+
+        def _backward():
+            # self.grad += out.grad * power * self.data ** (power - 1)
+            if self.device == "cpu":
+                cpu_power_backward(out.grad, self.data, self.grad, power, self.size)
+            else:
+                cuda_power_backward(out.grad, self.data, self.grad, power, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
+    def sum(self):
+        out = Tensor((1,), device=self.device, prev=(self,), op="sum")
+        if self.device == "cpu":
+            cpu_sum_reduce(self.data, out.data, self.size)
+        else:
+            cuda_sum_reduce(self.data, out.data, self.size)
+
+        def _backward():
+            # self.grad += out.grad
+            if self.device == "cpu":
+                cpu_sum_accu_scalar(self.grad, out.grad, self.grad, self.size)
+            else:
+                cuda_sum_accu_scalar(self.grad, out.grad, self.grad, self.size)
+
+
+        out._backward_func = _backward
+
+        return out
+
     def tanh(self) -> Tensor:
 
         out = Tensor(self.shape, device=self.device, prev=(self,), op="tanh")
@@ -319,6 +353,25 @@ cdef class Tensor:
         out._backward_func = _backward
 
         return out
+
+    def relu(self):
+        out = Tensor(self.shape, device=self.device, prev=(self,), op="relu")
+        if self.device == "cpu":
+            cpu_relu_array(self.data, out.data, self.size)
+        else:
+            cuda_relu_array(self.data, out.data, self.size)
+
+        def _backward():
+            # self.grad += out.grad * (out.data > 0)
+            if self.device == "cpu":
+                cpu_relu_backward(out.grad, out.data, self.grad, self.size)
+            else:
+                cuda_relu_backward(out.grad, out.data, self.grad, self.size)
+
+        out._backward_func = _backward
+
+        return out
+
 
 def fill(arr: Tensor, double value):
     """In place filling of an array"""

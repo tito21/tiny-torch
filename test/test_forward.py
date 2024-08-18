@@ -150,3 +150,48 @@ def test_relu(device):
     out_torch = a.relu()
 
     assert np.allclose(out.cpu().numpy(), out_torch.numpy())
+
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_sum_reduce(device):
+    a_numpy = np.random.rand(*SHAPE)
+    b_numpy = np.random.rand(*reversed(SHAPE))
+
+    a = from_numpy(a_numpy)
+    b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a.cuda()
+        b.cuda()
+
+    out = (a @ b).sum()
+    out.backward()
+
+    a_torch = torch.from_numpy(a_numpy)
+    b_torch = torch.from_numpy(b_numpy)
+
+    out_torch = (a_torch @ b_torch).sum()
+
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
+
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_power(device):
+    a_numpy = np.random.rand(*SHAPE)
+    b_numpy = np.random.rand(*reversed(SHAPE))
+    p = np.random.rand()
+
+    a = from_numpy(a_numpy)
+    b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a.cuda()
+        b.cuda()
+
+    out = (a @ b) ** p
+    out.backward()
+
+    a_torch = torch.from_numpy(a_numpy)
+    b_torch = torch.from_numpy(b_numpy)
+
+    out_torch = (a_torch @ b_torch) ** p
+
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())

@@ -37,10 +37,10 @@ void cpu_sum_accu_arrays(double* a, double* b, double* c, size_t size)
     }
 }
 
-void cpu_sum_accu_scalar(double* a, double b, double* c, size_t size)
+void cpu_sum_accu_scalar(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
-        c[i] += a[i] + b;
+        c[i] += a[i] + b[0];
     }
 }
 
@@ -159,6 +159,28 @@ int cpu_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, si
         }
     }
     return 0;
+}
+
+void cpu_power_arrays(double* a, double* c, double p, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = pow(a[i], p);
+    }
+}
+
+void cpu_power_backward(double* grad, double* out, double* c, double p, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = grad[i] * p * pow(out[i], p - 1);
+    }
+}
+
+void cpu_sum_reduce(double* a, double* c, size_t size)
+{
+    c[0] = 0;
+    for (size_t i = 0; i < size; i++) {
+        c[0] += a[i];
+    }
 }
 
 void cpu_sigmoid_array(double* a, double* c, size_t size)
