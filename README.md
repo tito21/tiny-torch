@@ -11,10 +11,23 @@ The main features it must have
  - Automatic diferentation
  - Simple `pytorch` like python API for deep learning
 
+# TODO
+
+ - [ ] Parallelize matmul on cuda
+ - [ ] Write nn module
+ - [ ] Add examples
+ - [ ] Improve how the backends are selected on the implementation
+
+# Difference with pytorch
+
+ - All tensors **always** requiere grads
+ - the idioms `.cpu()` and `.cuda()` don't act in place you have to save the return tenor to a variable
+
 # Building and installing
 
-Just run `python setup.py install`
+Just run `pip install .`
 
-# Run test aginst pytorch
+# Run test against pytorch
 
-`python test/test.py`
+`pytest`
+
