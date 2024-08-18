@@ -16,8 +16,8 @@ def test_add(device):
     b = from_numpy(b_numpy)
 
     if device == "cuda":
-        a = a.cuda()
-        b = b.cuda()
+        a.cuda()
+        b.cuda()
 
     out = a + b
 
@@ -36,8 +36,8 @@ def test_sub(device):
     b = from_numpy(b_numpy)
 
     if device == "cuda":
-        a = a.cuda()
-        b = b.cuda()
+        a.cuda()
+        b.cuda()
 
     out = a - b
 
@@ -56,8 +56,8 @@ def test_mul(device):
     b = from_numpy(b_numpy)
 
     if device == "cuda":
-        a = a.cuda()
-        b = b.cuda()
+        a.cuda()
+        b.cuda()
 
     out = a * b
 
@@ -74,7 +74,7 @@ def test_neg(device):
     a = from_numpy(a_numpy)
 
     if device == "cuda":
-        a = a.cuda()
+        a.cuda()
 
     out = -a
 
@@ -92,9 +92,8 @@ def test_matmul(device):
     b = from_numpy(b_numpy)
 
     if device == "cuda":
-        a = a.cuda()
-        b = b.cuda()
-
+        a.cuda()
+        b.cuda()
 
     out = a @ b
 
@@ -111,7 +110,7 @@ def test_tanh(device):
     a = from_numpy(a_numpy)
 
     if device == "cuda":
-        a = a.cuda()
+        a.cuda()
 
     out = a.tanh()
 
@@ -127,11 +126,27 @@ def test_sigmoid(device):
     a = from_numpy(a_numpy)
 
     if device == "cuda":
-        a = a.cuda()
+        a.cuda()
 
     out = a.sigmoid()
 
     a = torch.from_numpy(a_numpy)
     out_torch = a.sigmoid()
+
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
+
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_relu(device):
+    a_numpy = np.random.rand(*SHAPE)
+
+    a = from_numpy(a_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+
+    out = a.relu()
+
+    a = torch.from_numpy(a_numpy)
+    out_torch = a.relu()
 
     assert np.allclose(out.cpu().numpy(), out_torch.numpy())

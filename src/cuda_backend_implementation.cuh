@@ -25,3 +25,6 @@ void cuda_tanh_backward(double* grad, double* out, double* c, size_t size);
 
 void cuda_sigmoid_array(double* a, double* c, size_t size);
 void cuda_sigmoid_backward(double* grad, double* out, double* c, size_t size);
+
+void cuda_relu_array(double* a, double* c, size_t size);
+void cuda_relu_backward(double* grad, double* out, double* c, size_t size);

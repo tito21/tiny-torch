@@ -188,3 +188,17 @@ void cpu_tanh_backward(double* grad, double* out, double* c, size_t size)
         c[i] = grad[i] * (1 - out[i] * out[i]);
     }
 }
+
+void cpu_relu_array(double* a, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] = a[i] > 0 ? a[i] : 0;
+    }
+}
+
+void cpu_relu_backward(double* grad, double* out, double* c, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        c[i] += grad[i] * (out[i] > 0 ? 1 : 0);
+    }
+}

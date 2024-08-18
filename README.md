@@ -13,7 +13,7 @@ The main features it must have
 
 # TODO
 
- - [ ] Parallelize matmul on cuda
+ - [x] Parallelize matmul on cuda (with a naive algorithm)
  - [ ] Write nn module
  - [ ] Add examples
  - [ ] Improve how the backends are selected on the implementation
@@ -21,7 +21,6 @@ The main features it must have
 # Difference with pytorch
 
  - All tensors **always** requiere grads
- - the idioms `.cpu()` and `.cuda()` don't act in place you have to save the return tenor to a variable
 
 # Building and installing
 

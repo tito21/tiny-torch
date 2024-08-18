@@ -136,14 +136,16 @@ __global__ void matmul_kernel(double* a, double* b, double* c, size_t m, size_t 
     // n = l
     // (m x n) @ (l x k) = m x k
     // c_{xy} = sum_{i} a_{xi} * b_{iy}
-    for (size_t x = 0; x < m; x++) {
-        for (size_t y = 0; y < k; y++) {
-            c[x * k + y] = 0;
-            for (size_t i = 0; i < n; i++) {
-                c[x * k + y] += a[x * n + i] * b[i * k + y];
-            }
+
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < m && y < k) {
+        c[x * k + y] = 0;
+        for (size_t i = 0; i < n; i++) {
+            c[x * k + y] += a[x * n + i] * b[i * k + y];
         }
     }
+
 }
 
 __global__ void matmul_transpose_a_kernel(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k)
@@ -151,14 +153,15 @@ __global__ void matmul_transpose_a_kernel(double* a, double* b, double* c, size_
     // m = l
     // (m x n).T @ (l x k) = n x k
     // c_{xy} = sum_{i} a_{ix} * b_{iy}
-    for (size_t x = 0; x < n; x++) {
-        for (size_t y = 0; y < k; y++) {
-            c[x * k + y] = 0;
-            for (size_t i = 0; i < m; i++) {
-                c[x * k + y] += a[i * n + x] * b[i * k + y];
-            }
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < n && y < k) {
+        c[x * k + y] = 0;
+        for (size_t i = 0; i < m; i++) {
+            c[x * k + y] += a[i * n + x] * b[i * k + y];
         }
     }
+
 }
 
 __global__ void matmul_transpose_b_kernel(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k)
@@ -166,12 +169,12 @@ __global__ void matmul_transpose_b_kernel(double* a, double* b, double* c, size_
     // n = k
     // (m x n) @ (l x k).T = m x l
     // c_{xy} = sum_{i} a_{xi} * b_{yi}
-    for (size_t x = 0; x < m; x++) {
-        for (size_t y = 0; y < l; y++) {
-            c[x * l + y] = 0;
-            for (size_t i = 0; i < n; i++) {
-                c[x * l + y] += a[x * n + i] * b[y * k + i];
-            }
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < m && y < l) {
+        c[x * l + y] = 0;
+        for (size_t i = 0; i < n; i++) {
+            c[x * l + y] += a[x * n + i] * b[y * k + i];
         }
     }
 }
@@ -181,12 +184,12 @@ __global__ void matmul_transpose_ab_kernel(double* a, double* b, double* c, size
     // m = k
     // (m x n).T @ (l x k).T = n x l
     // c_{xy} = sum_{i} a_{ix} * b_{yi}
-    for (size_t x = 0; x < n; x++) {
-        for (size_t y = 0; y < l; y++) {
-            c[x * l + y] = 0;
-            for (size_t i = 0; i < m; i++) {
-                c[x * l + y] += a[i * n + x] * b[y * k + i];
-            }
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < n && y < l) {
+        c[x * l + y] = 0;
+        for (size_t i = 0; i < m; i++) {
+            c[x * l + y] += a[i * n + x] * b[y * k + i];
         }
     }
 }
@@ -220,5 +223,21 @@ __global__ void tanh_backward_kernel(double* grad, double* out, double* c, size_
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     if (i < size) {
         c[i] = grad[i] * (1 - out[i] * out[i]);
+    }
+}
+
+__global__ void relu_array_kernel(double* a, double* c, size_t size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i < size) {
+        c[i] = (a[i] > 0 ? a[i] : 0);
+    }
+}
+
+__global__ void relu_backward_kernel(double* grad, double* out, double* c, size_t size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i < size) {
+        c[i] = grad[i] * (out[i] > 0 ? 1 : 0);
     }
 }

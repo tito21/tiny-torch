@@ -28,3 +28,6 @@ void cpu_sigmoid_backward(double* grad, double* out, double* c, size_t size);
 
 void cpu_tanh_array(double* a, double* c, size_t size);
 void cpu_tanh_backward(double* grad, double* out, double* c, size_t size);
+
+void cpu_relu_array(double* a, double* c, size_t size);
+void cpu_relu_backward(double* grad, double* out, double* c, size_t size);

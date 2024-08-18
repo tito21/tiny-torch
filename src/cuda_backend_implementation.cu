@@ -96,7 +96,9 @@ int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, s
         if (n != l) {
             return -1;
         }
-        matmul_kernel<<<(m * k + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, b, c, m, n, l, k);
+        dim3 threads_per_block(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 blocks((k + threads_per_block.x - 1) / threads_per_block.x, (m + threads_per_block.y - 1) / threads_per_block.y);
+        matmul_kernel<<<blocks, threads_per_block>>>(a, b, c, m, n, l, k);
         cudaCheck(cudaGetLastError());
 
     } else if (transpose_a && !transpose_b) {
@@ -106,8 +108,12 @@ int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, s
         if (m != l) {
             return -1;
         }
-        matmul_transpose_a_kernel<<<(n * k + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, b, c, m, n, l, k);
+
+        dim3 threads_per_block(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 blocks((k + threads_per_block.x - 1) / threads_per_block.x, (n + threads_per_block.y - 1) / threads_per_block.y);
+        matmul_transpose_a_kernel<<<blocks, threads_per_block>>>(a, b, c, m, n, l, k);
         cudaCheck(cudaGetLastError());
+
     } else if (!transpose_a && transpose_b) {
         // n = k
         // (m x n) @ (l x k).T = m x l
@@ -115,8 +121,11 @@ int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, s
         if (n != k) {
             return -1;
         }
-        matmul_transpose_b_kernel<<<(m * l + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, b, c, m, n, l, k);
+        dim3 threads_per_block(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 blocks((l + threads_per_block.x - 1) / threads_per_block.x, (m + threads_per_block.y - 1) / threads_per_block.y);
+        matmul_transpose_b_kernel<<<blocks, threads_per_block>>>(a, b, c, m, n, l, k);
         cudaCheck(cudaGetLastError());
+
     } else {
         // m = k
         // (m x n).T @ (l x k).T = n x l
@@ -124,7 +133,9 @@ int cuda_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, s
         if (m != k) {
             return -1;
         }
-        matmul_transpose_ab_kernel<<<(n * l + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, b, c, m, n, l, k);
+        dim3 threads_per_block(BLOCK_SIZE, BLOCK_SIZE);
+        dim3 blocks((l + threads_per_block.x - 1) / threads_per_block.x, (n + threads_per_block.y - 1) / threads_per_block.y);
+        matmul_transpose_ab_kernel<<<blocks, threads_per_block>>>(a, b, c, m, n, l, k);
         cudaCheck(cudaGetLastError());
 
     }
@@ -149,4 +160,14 @@ void cuda_tanh_array(double* a, double* c, size_t size)
 void cuda_tanh_backward(double* grad, double* out, double* c, size_t size)
 {
     tanh_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, size);
+}
+
+void cuda_relu_array(double* a, double* c, size_t size)
+{
+    relu_array_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(a, c, size);
+}
+
+void cuda_relu_backward(double* grad, double* out, double* c, size_t size)
+{
+    relu_backward_kernel<<<(size + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(grad, out, c, size);
 }
