@@ -1,4 +1,4 @@
-import unittest
+import pytest
 
 import numpy as np
 import torch
@@ -9,12 +9,18 @@ from tinytorch import from_numpy
 
 SHAPE = (4, 8)
 
-def test_add():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_add(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a + b
     out.backward()
 
@@ -26,14 +32,20 @@ def test_add():
     out_torch = a_torch + b_torch
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))
 
-def test_sub():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_sub(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a - b
     out.backward()
 
@@ -45,14 +57,20 @@ def test_sub():
     out_torch = a_torch - b_torch
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))
 
-def test_mul():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_mul(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a * b
     out.backward()
 
@@ -64,12 +82,17 @@ def test_mul():
     out_torch = a_torch * b_torch
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))
 
-def test_neg():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_neg(device):
     a_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+
     out = -a
     out.backward()
 
@@ -79,14 +102,20 @@ def test_neg():
     out_torch = -a_torch
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()))
 
-def test_matmul():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_matmul(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*reversed(SHAPE))
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a @ b
     out.backward()
 
@@ -98,14 +127,20 @@ def test_matmul():
     out_torch = a_torch @ b_torch
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))
 
-def test_tanh():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_tanh(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*reversed(SHAPE))
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = (a @ b).tanh()
     out.backward()
 
@@ -117,14 +152,20 @@ def test_tanh():
     out_torch = (a_torch @ b_torch).tanh()
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))
 
-def test_sigmoid():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_sigmoid(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*reversed(SHAPE))
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = (a @ b).sigmoid()
     out.backward()
 
@@ -136,4 +177,4 @@ def test_sigmoid():
     out_torch = (a_torch @ b_torch).sigmoid()
     out_torch.backward(gradient=torch.ones_like(out_torch))
 
-    assert (np.allclose(a.grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.grad_numpy(), b_torch.grad.numpy()))
+    assert (np.allclose(a.cpu().grad_numpy(), a_torch.grad.numpy()) and np.allclose(b.cpu().grad_numpy(), b_torch.grad.numpy()))

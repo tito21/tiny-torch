@@ -24,6 +24,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+# .pytest_cache/
 
-# C extensions
+# CPP extensions
+src/*.cpp
 src/engine.c
+src/cpu_backend.c

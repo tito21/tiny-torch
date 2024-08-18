@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -6,12 +7,17 @@ from tinytorch import from_numpy
 
 SHAPE = (4, 8)
 
-def test_add():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_add(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
 
     out = a + b
 
@@ -19,79 +25,113 @@ def test_add():
     b = torch.from_numpy(b_numpy)
 
     out_torch = a + b
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_sub():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_sub(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a - b
 
     a = torch.from_numpy(a_numpy)
     b = torch.from_numpy(b_numpy)
 
     out_torch = a - b
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_mul():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_mul(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
     out = a * b
 
     a = torch.from_numpy(a_numpy)
     b = torch.from_numpy(b_numpy)
 
     out_torch = a * b
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_neg():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_neg(device):
     a_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+
     out = -a
 
     a = torch.from_numpy(a_numpy)
 
     out_torch = -a
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_matmul():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_matmul(device):
     a_numpy = np.random.rand(*SHAPE)
     b_numpy = np.random.rand(*reversed(SHAPE))
 
     a = from_numpy(a_numpy)
     b = from_numpy(b_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+        b = b.cuda()
+
+
     out = a @ b
 
     a = torch.from_numpy(a_numpy)
     b = torch.from_numpy(b_numpy)
 
     out_torch = a @ b
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_tanh():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_tanh(device):
     a_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+
     out = a.tanh()
 
     a = torch.from_numpy(a_numpy)
     out_torch = a.tanh()
 
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())
 
-def test_sigmoid():
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_sigmoid(device):
     a_numpy = np.random.rand(*SHAPE)
 
     a = from_numpy(a_numpy)
+
+    if device == "cuda":
+        a = a.cuda()
+
     out = a.sigmoid()
 
     a = torch.from_numpy(a_numpy)
     out_torch = a.sigmoid()
 
-    assert np.allclose(out.numpy(), out_torch.numpy())
+    assert np.allclose(out.cpu().numpy(), out_torch.numpy())

@@ -1,16 +1,28 @@
 import subprocess
-from setuptools import Extension, setup
+from setuptools import setup, Extension
 from Cython.Build import cythonize
+import numpy as np
 
-import numpy
+subprocess.run("make all", shell=True)
 
-subprocess.run("make")
+
+# Main engine extension
+engine = Extension(
+    name="tinytorch",
+    sources=["src/tinytorch.pyx"],
+    include_dirs=[np.get_include(), '.'],
+    library_dirs=["."],
+    libraries=['cudart'],
+    extra_objects=[os.path.abspath("build/cuda_backend.so"), os.path.abspath("build/memutils.so"), os.path.abspath("build/cpu_backend.so")],
+    language="c++",
+    extra_compile_args={},
+    runtime_library_dirs=["."]
+)
 
 setup(
-    name='tiny-torch',
-    ext_modules=cythonize([
-    Extension("tinytorch", ["src/engine.pyx"],
-              include_dirs=[numpy.get_include()],
-              libraries=["bin/cpu_backend.so"])
-    ], annotate=True),
+    name='tinytorch',
+    ext_modules=cythonize([engine], annotate=True),
+ #   cmdclass={'build_ext': custom_build_ext},  # Using the custom build_ext class
+    include_dirs=[np.get_include(), ".", "src"],
+
 )

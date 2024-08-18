@@ -2,98 +2,98 @@
 #include <string.h>
 #include <math.h>
 
-double* new_array(size_t size)
+double* cpu_new_array(size_t size)
 {
     return (double* ) malloc(size * sizeof(double));
 }
 
-void free_array(double* arr) {
+void cpu_free_array(double* arr) {
     free(arr);
 }
 
-void set_array(double* arr, double value, size_t size)
+void cpu_set_array(double* arr, double value, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         arr[i] = value;
     }
 }
 
-void copy_array(double* dest, double* src, size_t size)
+void cpu_copy_array(double* dest, double* src, size_t size)
 {
     memcpy(dest, src, size * sizeof(double));
 }
 
-void sum_arrays(double* a, double* b, double* c, size_t size)
+void cpu_sum_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = a[i] + b[i];
     }
 }
 
-void sum_accu_arrays(double* a, double* b, double* c, size_t size)
+void cpu_sum_accu_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] + b[i];
     }
 }
 
-void sum_accu_scalar(double* a, double b, double* c, size_t size)
+void cpu_sum_accu_scalar(double* a, double b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] + b;
     }
 }
 
-void sub_arrays(double* a, double* b, double* c, size_t size)
+void cpu_sub_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = a[i] - b[i];
     }
 }
 
-void sub_accu_arrays(double* a, double* b, double* c, size_t size)
+void cpu_sub_accu_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] - b[i];
     }
 }
 
-void mul_arrays(double* a, double* b, double* c, size_t size)
+void cpu_mul_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = a[i] * b[i];
     }
 }
 
-void mul_accu_arrays(double* a, double* b, double* c, size_t size)
+void cpu_mul_accu_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] * b[i];
     }
 }
 
-void mul_accu_scalar(double* a, double b, double* c, size_t size)
+void cpu_mul_accu_scalar(double* a, double b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] * b;
     }
 }
 
-void div_arrays(double* a, double* b, double* c, size_t size)
+void cpu_div_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = a[i] / b[i];
     }
 }
 
-void div_accu_arrays(double* a, double* b, double* c, size_t size)
+void cpu_div_accu_arrays(double* a, double* b, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += a[i] / b[i];
     }
 }
 
-int matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k, int transpose_a, int transpose_b)
+int cpu_matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t k, int transpose_a, int transpose_b)
 {
     // a: m x n
     // b: l x k
@@ -161,28 +161,28 @@ int matmul(double* a, double* b, double* c, size_t m, size_t n, size_t l, size_t
     return 0;
 }
 
-void sigmoid_array(double* a, double* c, size_t size)
+void cpu_sigmoid_array(double* a, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = 1 / (1 + exp(-a[i]));
     }
 }
 
-void sigmoid_backward(double* grad, double* out, double* c, size_t size)
+void cpu_sigmoid_backward(double* grad, double* out, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] += grad[i] * out[i] * (1 - out[i]);
     }
 }
 
-void tanh_array(double* a, double* c, size_t size)
+void cpu_tanh_array(double* a, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = tanh(a[i]);
     }
 }
 
-void tanh_backward(double* grad, double* out, double* c, size_t size)
+void cpu_tanh_backward(double* grad, double* out, double* c, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
         c[i] = grad[i] * (1 - out[i] * out[i]);
