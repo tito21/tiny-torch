@@ -28,5 +28,3 @@ MANIFEST
 
 # CPP extensions
 src/*.cpp
-src/engine.c
-src/cpu_backend.c
